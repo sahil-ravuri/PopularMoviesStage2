@@ -12,14 +12,14 @@
         android:layout_width="match_parent"
 
         android:layout_height="match_parent"/>
+
     <TextView
+        android:id="@+id/id_error"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/error"
-        android:id="@+id/id_error"
         android:layout_gravity="center"
-        android:textAlignment="center"
-        />
+        android:text="@string/error"
+        android:textAlignment="center" />
     <ProgressBar
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

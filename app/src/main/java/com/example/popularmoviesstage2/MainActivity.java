@@ -1,10 +1,8 @@
 package com.example.popularmoviesstage2;
 
-import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -13,6 +11,9 @@ import android.text.Spanned;
 import android.text.style.ImageSpan;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.example.popularmoviesstage2.Adapter.MovieAdapter;
 import com.example.popularmoviesstage2.DataBase.FavoriteMovie;
@@ -33,15 +34,18 @@ public class MainActivity extends AppCompatActivity {
     private static final String SORT_POPULAR = "popular";
     private static final String SORT_TOP_RATED = "top_rated";
     private static final String SORT_FAVORITE = "favorite";
-    private static String currentSort;
+    private static String currentSort = SORT_POPULAR;
 
     private List<Movies> movieList;
+    private MovieAdapter movieAdapter;
 
     private RecyclerView mMovieRecyclerView;
 
     private MainView viewModel;
 
     private List<FavoriteMovie> favMovs;
+    private ProgressBar progressBar;
+    private TextView error;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,10 +54,10 @@ public class MainActivity extends AppCompatActivity {
         GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
         mMovieRecyclerView.setLayoutManager(layoutManager);
         mMovieRecyclerView.setHasFixedSize(true);
-
+        progressBar=findViewById(R.id.id_progress_bar);
         movieList = new ArrayList<>();
         favMovs = new ArrayList<>();
-
+        error=findViewById(R.id.id_error);
         setTitle(getString(R.string.app_name) );
 
         viewModel = ViewModelProviders.of(this).get(MainView.class);
@@ -84,28 +88,30 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-       switch(id){
-           case R.id.id_popular:
-               ClearMovieItemList();
-               currentSort = SORT_POPULAR;
-               setTitle(getString(R.string.app_name));
-               loadMovies();
-               return true;
-           case R.id.id_top_rated:
-               ClearMovieItemList();
-               currentSort = SORT_TOP_RATED;
-               setTitle("Top Rated");
-               loadMovies();
-               return true;
-           case R.id.id_favorites:
-               ClearMovieItemList();
-               currentSort = SORT_FAVORITE;
-               setTitle("Favorites");
-               loadMovies();
-               return true;
-       }
+        if (id == R.id.id_popular && !currentSort.equals(SORT_POPULAR)) {
+            ClearMovieItemList();
+            currentSort = SORT_POPULAR;
+            setTitle(getString(R.string.app_name) + " - Popular");
+            loadMovies();
+            return true;
+        }
+        if (id == R.id.id_top_rated && !currentSort.equals(SORT_TOP_RATED)) {
+            ClearMovieItemList();
+            currentSort = SORT_TOP_RATED;
+            setTitle(getString(R.string.app_name) + " - Top rated");
+            loadMovies();
+            return true;
+        }
+        if (id == R.id.id_favorites&& !currentSort.equals(SORT_FAVORITE)) {
+            ClearMovieItemList();
+            currentSort = SORT_FAVORITE;
+            setTitle(getString(R.string.app_name) + " - Favorite");
+            loadMovies();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
+
 
     private void ClearMovieItemList() {
         if (movieList != null) {
@@ -118,15 +124,6 @@ public class MainActivity extends AppCompatActivity {
     private void makeMovieSearchQuery() {
         if (currentSort.equals(SORT_FAVORITE)) {
             ClearMovieItemList();
-            viewModel.getAllMovies().observe(this, new Observer<List<FavoriteMovie>>() {
-                @Override
-                public void onChanged(@Nullable List<FavoriteMovie> favs) {
-                    if(favs.size()>0) {
-                        favMovs.clear();
-                        favMovs = favs;
-                    }
-                }
-            });
             for (int i = 0; i< favMovs.size(); i++) {
                 Movies mov = new Movies(
                         String.valueOf(favMovs.get(i).getId()),
@@ -140,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
                 );
                 movieList.add( mov );
             }
+            movieAdapter.setMovieData(movieList);
         } else {
             String movieQuery = currentSort;
             URL movieSearchUrl = Network.buildUrl(movieQuery, getText(R.string.api_key).toString());
@@ -149,6 +147,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     public class MoviesQueryTask extends AsyncTask<URL, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressBar.setVisibility(View.VISIBLE);
+            error.setVisibility(View.INVISIBLE);
+
+        }
 
         @Override
         protected String doInBackground(URL... params) {
@@ -164,11 +170,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String searchResults) {
+            progressBar.setVisibility(View.INVISIBLE);
             if (searchResults != null && !searchResults.equals("")) {
                 movieList.clear();
                 movieList = Json.parseMoviesJson(searchResults);
                 setAdapter(movieList);
             }
+            else {error.setVisibility(View.VISIBLE);}
         }
     }
 
