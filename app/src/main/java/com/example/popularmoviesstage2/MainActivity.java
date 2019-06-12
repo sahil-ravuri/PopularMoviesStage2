@@ -1,8 +1,10 @@
 package com.example.popularmoviesstage2;
 
+import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +17,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.popularmoviesstage2.Adapter.FavAdapter;
 import com.example.popularmoviesstage2.Adapter.MovieAdapter;
 import com.example.popularmoviesstage2.DataBase.FavoriteMovie;
 import com.example.popularmoviesstage2.Model.MainView;
@@ -91,21 +94,21 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.id_popular && !currentSort.equals(SORT_POPULAR)) {
             ClearMovieItemList();
             currentSort = SORT_POPULAR;
-            setTitle(getString(R.string.app_name) + " - Popular");
+            setTitle(getString(R.string.app_name) );
             loadMovies();
             return true;
         }
         if (id == R.id.id_top_rated && !currentSort.equals(SORT_TOP_RATED)) {
             ClearMovieItemList();
             currentSort = SORT_TOP_RATED;
-            setTitle(getString(R.string.app_name) + " - Top rated");
+            setTitle("Top rated");
             loadMovies();
             return true;
         }
         if (id == R.id.id_favorites&& !currentSort.equals(SORT_FAVORITE)) {
             ClearMovieItemList();
             currentSort = SORT_FAVORITE;
-            setTitle(getString(R.string.app_name) + " - Favorite");
+            setTitle("Favorite");
             loadMovies();
             return true;
         }
@@ -124,20 +127,27 @@ public class MainActivity extends AppCompatActivity {
     private void makeMovieSearchQuery() {
         if (currentSort.equals(SORT_FAVORITE)) {
             ClearMovieItemList();
-            for (int i = 0; i< favMovs.size(); i++) {
-                Movies mov = new Movies(
-                        String.valueOf(favMovs.get(i).getId()),
-                        favMovs.get(i).getTitle(),
-                        favMovs.get(i).getReleaseDate(),
-                        favMovs.get(i).getVote(),
-                        favMovs.get(i).getPopularity(),
-                        favMovs.get(i).getSynopsis(),
-                        favMovs.get(i).getImage(),
-                        favMovs.get(i).getBackdrop()
-                );
-                movieList.add( mov );
-            }
-            movieAdapter.setMovieData(movieList);
+            viewModel.getAllMovies().observe(this, new Observer<List<FavoriteMovie>>() {
+                @Override
+                public void onChanged(@Nullable List<FavoriteMovie> favMovs) {
+                    for (int i = 0; i< favMovs.size(); i++) {
+                        Movies mov = new Movies(
+                                String.valueOf(favMovs.get(i).getId()),
+                                favMovs.get(i).getTitle(),
+                                favMovs.get(i).getReleaseDate(),
+                                favMovs.get(i).getVote(),
+                                favMovs.get(i).getPopularity(),
+                                favMovs.get(i).getSynopsis(),
+                                favMovs.get(i).getImage(),
+                                favMovs.get(i).getBackdrop()
+                        );
+                        movieList.add( mov );
+                        FavAdapter mMovieAdapter = new FavAdapter(MainActivity.this, movieList);
+                        mMovieRecyclerView.setAdapter(mMovieAdapter);
+                    }
+                }
+            });
+
         } else {
             String movieQuery = currentSort;
             URL movieSearchUrl = Network.buildUrl(movieQuery, getText(R.string.api_key).toString());

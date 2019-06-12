@@ -49,6 +49,7 @@ public class  DetailedActivity extends AppCompatActivity implements TrailerAdapt
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detailed);
         mainView = ViewModelProviders.of(this).get(MainView.class);
+        mFavButton = findViewById(R.id.iv_favButton);
         Intent intent = getIntent();
         if (intent == null) {
             closeOnError("Intent is null");
@@ -61,7 +62,9 @@ public class  DetailedActivity extends AppCompatActivity implements TrailerAdapt
         }
         FavoriteMovie favoriteMovie = mainView.check(Integer.parseInt(movieItem.getId()));
         if (favoriteMovie != null)
-            Toast.makeText(this, "Movie Existing", Toast.LENGTH_SHORT).show();
+            setFavorite(true);
+        else
+            setFavorite(false);
         mTrailerRecyclerView = findViewById(R.id.rv_trailers);
         mTrailerAdapter = new TrailerAdapter(this, trailerList, this);
         mTrailerRecyclerView.setAdapter(mTrailerAdapter);
@@ -71,15 +74,9 @@ public class  DetailedActivity extends AppCompatActivity implements TrailerAdapt
         mFavButton = findViewById(R.id.iv_favButton);
         mDb = MovieDatabase.getInstance(getApplicationContext());
 
-        AppExecutors.getInstance().diskIO().execute(new Runnable() {
-            @Override
-            public void run() {
-                final FavoriteMovie fmov = mDb.movieDao().loadMovieById(Integer.parseInt(movieItem.getId()));
-                setFavorite((fmov != null) ? true : false);
-            }
-        });
-        getMoreDetails(movieItem.getId());
 
+        getMoreDetails(movieItem.getId());
+        setTitle(movieItem.getTitle());
     }
 
     private void setFavorite(Boolean fav) {
@@ -196,8 +193,14 @@ public class  DetailedActivity extends AppCompatActivity implements TrailerAdapt
                         movieItem.getImage(),
                         movieItem.getBackdrop()
                 );
-                mainView.insertMovies(mov);
-                Toast.makeText(DetailedActivity.this, "Insertion Successful", Toast.LENGTH_SHORT).show();
+                if(isFav)
+                {
+                    mainView.deleteMovie(mov);
+                    setFavorite(false);
+                }else{
+                    mainView.insertMovies(mov);
+                    setFavorite(true);
+                }
             }
         });
 
