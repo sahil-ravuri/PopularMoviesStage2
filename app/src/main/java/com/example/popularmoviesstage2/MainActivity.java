@@ -52,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     public static int top = -1;
     public GridLayoutManager layoutManager;
 
+    String jData = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,8 +72,19 @@ public class MainActivity extends AppCompatActivity {
         mMovieRecyclerView.setHasFixedSize(true);
         mMovieRecyclerView.setLayoutManager(layoutManager);
 
+        if(savedInstanceState!=null && savedInstanceState.containsKey("JDATA"))
+        {
+            jData = savedInstanceState.getString("JDATA");
+            progressBar.setVisibility(View.INVISIBLE);
+            if (jData != null && !jData.equals("")) {
+                movieList.clear();
+                movieList = Json.parseMoviesJson(jData);
+                setAdapter(movieList);
+            }
+        }else{
+            loadMovies();     
+        }
 
-        loadMovies();
     }
 
     @Override
@@ -206,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String searchResults) {
+            jData = searchResults;
             progressBar.setVisibility(View.INVISIBLE);
             if (searchResults != null && !searchResults.equals("")) {
                 movieList.clear();
@@ -221,5 +235,13 @@ public class MainActivity extends AppCompatActivity {
         mMovieRecyclerView.setAdapter(mMovieAdapter);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if(jData!=null)
+        {
+            outState.putString("JDATA",jData);
+        }
+    }
 }
 
