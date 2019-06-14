@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String SORT_POPULAR = "popular";
@@ -49,12 +48,16 @@ public class MainActivity extends AppCompatActivity {
     private List<FavoriteMovie> favMovs;
     private ProgressBar progressBar;
     private TextView error;
+    public static int index = -1;
+    public static int top = -1;
+    public GridLayoutManager layoutManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mMovieRecyclerView = findViewById(R.id.rv_main);
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
+        layoutManager = new GridLayoutManager(this, 2);
         mMovieRecyclerView.setLayoutManager(layoutManager);
         mMovieRecyclerView.setHasFixedSize(true);
         progressBar=findViewById(R.id.id_progress_bar);
@@ -64,9 +67,32 @@ public class MainActivity extends AppCompatActivity {
         setTitle(getString(R.string.app_name) );
 
         viewModel = ViewModelProviders.of(this).get(MainView.class);
+        mMovieRecyclerView.setHasFixedSize(true);
+        mMovieRecyclerView.setLayoutManager(layoutManager);
+
 
         loadMovies();
     }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        index = layoutManager.findFirstVisibleItemPosition();
+        View v = mMovieRecyclerView.getChildAt(0);
+        top = (v == null) ? 0 : (v.getTop() - mMovieRecyclerView.getPaddingTop());
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        if(index != -1)
+        {
+            layoutManager.scrollToPositionWithOffset( index, top);
+        }
+    }
+
 
     private void setIconInMenu(Menu menu, int id_menu, int id_lable, int id_icon) {
         MenuItem item = menu.findItem(id_menu);
