@@ -37,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String SORT_TOP_RATED = "top_rated";
     private static final String SORT_FAVORITE = "favorite";
     private static String currentSort = SORT_POPULAR;
-
     private List<Movies> movieList;
     private MovieAdapter movieAdapter;
 
